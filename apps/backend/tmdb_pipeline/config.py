@@ -97,15 +97,26 @@ class Config:
         if not bearer_token:
             raise ValueError("TMDB_BEARER_TOKEN environment variable is required")
 
-        # Database config
-        db_host = os.getenv("SQL_HOST", "localhost")
-        db_port = int(os.getenv("SQL_PORT", "3306"))
-        db_user = os.getenv("SQL_USER", "")
-        db_password = os.getenv("SQL_PASS", "")
-        db_name = os.getenv("SQL_DB", "")
+        # Database config - check DB_MODE to select local or remote
+        db_mode = os.getenv("DB_MODE", "local").lower()
+
+        if db_mode == "remote":
+            # Use REMOTE_SQL_* variables (AWS RDS)
+            db_host = os.getenv("REMOTE_SQL_HOST", os.getenv("SQL_HOST", "localhost"))
+            db_port = int(os.getenv("REMOTE_SQL_PORT", os.getenv("SQL_PORT", "3306")))
+            db_user = os.getenv("REMOTE_SQL_USER", os.getenv("SQL_USER", ""))
+            db_password = os.getenv("REMOTE_SQL_PASS", os.getenv("SQL_PASS", ""))
+            db_name = os.getenv("REMOTE_SQL_DB", os.getenv("SQL_DB", ""))
+        else:
+            # Use LOCAL_SQL_* variables (Docker MySQL) - default
+            db_host = os.getenv("LOCAL_SQL_HOST", os.getenv("SQL_HOST", "localhost"))
+            db_port = int(os.getenv("LOCAL_SQL_PORT", os.getenv("SQL_PORT", "3306")))
+            db_user = os.getenv("LOCAL_SQL_USER", os.getenv("SQL_USER", "root"))
+            db_password = os.getenv("LOCAL_SQL_PASS", os.getenv("SQL_PASS", "password"))
+            db_name = os.getenv("LOCAL_SQL_DB", os.getenv("SQL_DB", "tmdb"))
 
         if not db_user or not db_name:
-            raise ValueError("SQL_USER and SQL_DB environment variables are required")
+            raise ValueError("Database credentials not configured. Check DB_MODE and SQL variables in .env")
 
         # Optional settings
         base_url = os.getenv("BASE_URL", "https://api.themoviedb.org/3")

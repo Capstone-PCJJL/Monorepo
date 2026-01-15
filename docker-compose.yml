@@ -1,24 +1,49 @@
 # =============================================================================
 # Monorepo Docker Compose
 # =============================================================================
-# Usage:
-#   docker-compose up              # Start all services
-#   docker-compose up -d           # Start in background
-#   docker-compose up backend      # Start backend only
-#   docker-compose down            # Stop all services
+#
+# SWITCHING DATABASES - Just change DB_MODE in .env:
+#
+#   DB_MODE=local   -> Uses LOCAL_SQL_* variables (Docker MySQL)
+#   DB_MODE=remote  -> Uses REMOTE_SQL_* variables (AWS RDS)
+#
+# COMMANDS:
+#
+#   Start:
+#     docker-compose up -d                    # Start all (db + backend + frontend)
+#     docker-compose up db -d                 # Start database only
+#     docker-compose up backend frontend -d   # Skip local db (use AWS RDS)
+#
+#   Stop:
+#     docker-compose down                     # Stop all services
+#     docker-compose down -v                  # Stop + delete database volume
+#
+#   Clean up / Clear cache:
+#     docker system prune                     # Remove unused containers, networks, images
+#     docker system prune -a                  # Remove ALL unused images (reclaim space)
+#     docker volume prune                     # Remove unused volumes
+#     docker builder prune                    # Clear build cache
+#
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # MySQL Database
+  # MySQL Database (LOCAL DEVELOPMENT ONLY)
+  # ---------------------------------------------------------------------------
+  # This service is OPTIONAL - only needed when using local database.
+  # On first start, creates tables from docker/mysql/init/01-schema.sql
+  # The seeder service then populates data from AWS RDS.
+  #
+  # To use AWS RDS instead, skip this service:
+  #   docker-compose up backend frontend -d
   # ---------------------------------------------------------------------------
   db:
     image: mysql:8
     container_name: monorepo-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${SQL_PASS:-password}
-      MYSQL_DATABASE: ${SQL_DB:-tmdb}
+      MYSQL_ROOT_PASSWORD: ${LOCAL_SQL_PASS:-password}
+      MYSQL_DATABASE: ${LOCAL_SQL_DB:-tmdb}
     ports:
       - "3306:3306"
     volumes:
@@ -30,7 +55,41 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
+  # Database Seeder (runs once on first start)
+  # ---------------------------------------------------------------------------
+  # Automatically seeds local MySQL with ~5k movies from AWS RDS.
+  # Only runs if the movies table is empty, safe to run repeatedly.
+  # To re-seed (after schema changes): docker-compose run --rm seeder --force
+  # ---------------------------------------------------------------------------
+  seeder:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: monorepo-seeder
+    command: ["seed", "--limit", "5000"]
+    environment:
+      # Local Docker database (connects via Docker network)
+      - LOCAL_SQL_HOST=db
+      - LOCAL_SQL_PORT=3306
+      - LOCAL_SQL_USER=${LOCAL_SQL_USER:-root}
+      - LOCAL_SQL_PASS=${LOCAL_SQL_PASS:-password}
+      - LOCAL_SQL_DB=${LOCAL_SQL_DB:-tmdb}
+      # Remote AWS RDS (source for seed data)
+      - REMOTE_SQL_HOST=${REMOTE_SQL_HOST}
+      - REMOTE_SQL_PORT=${REMOTE_SQL_PORT:-3306}
+      - REMOTE_SQL_USER=${REMOTE_SQL_USER}
+      - REMOTE_SQL_PASS=${REMOTE_SQL_PASS}
+      - REMOTE_SQL_DB=${REMOTE_SQL_DB:-movie_capstone_db}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
   # Backend API & Pipeline
+  # ---------------------------------------------------------------------------
+  # Works with either local Docker database or AWS RDS.
+  # Database connection is configured via environment variables in .env
   # ---------------------------------------------------------------------------
   backend:
     build:
@@ -43,20 +102,29 @@ services:
       - API_KEY=${API_KEY}
       - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN}
       - BASE_URL=${BASE_URL:-https://api.themoviedb.org/3}
-      - SQL_HOST=${SQL_HOST:-db}
-      - SQL_PORT=${SQL_PORT:-3306}
-      - SQL_USER=${SQL_USER:-root}
-      - SQL_PASS=${SQL_PASS:-password}
-      - SQL_DB=${SQL_DB:-tmdb}
+      # Database mode: "local" or "remote"
+      - DB_MODE=${DB_MODE:-local}
+      # Local Docker database (uses "db" service name in Docker network)
+      - LOCAL_SQL_HOST=db
+      - LOCAL_SQL_PORT=3306
+      - LOCAL_SQL_USER=${LOCAL_SQL_USER:-root}
+      - LOCAL_SQL_PASS=${LOCAL_SQL_PASS:-password}
+      - LOCAL_SQL_DB=${LOCAL_SQL_DB:-tmdb}
+      # Remote AWS RDS database
+      - REMOTE_SQL_HOST=${REMOTE_SQL_HOST}
+      - REMOTE_SQL_PORT=${REMOTE_SQL_PORT:-3306}
+      - REMOTE_SQL_USER=${REMOTE_SQL_USER}
+      - REMOTE_SQL_PASS=${REMOTE_SQL_PASS}
+      - REMOTE_SQL_DB=${REMOTE_SQL_DB:-movie_capstone_db}
+      # API config
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "8000:8000"
-    # Uncomment below if using the local db container instead of external database
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
+    depends_on:
+      seeder:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Frontend (Development with Vite)

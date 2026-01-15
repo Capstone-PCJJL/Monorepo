@@ -716,10 +716,9 @@ def main(args: Optional[list] = None) -> int:
         print("\nMake sure your .env file contains:")
         print("  API_KEY=<your_tmdb_api_key>")
         print("  TMDB_BEARER_TOKEN=<your_bearer_token>")
-        print("  SQL_HOST=<database_host>")
-        print("  SQL_USER=<database_user>")
-        print("  SQL_PASS=<database_password>")
-        print("  SQL_DB=<database_name>")
+        print("  DB_MODE=local (or remote)")
+        print("  LOCAL_SQL_HOST, LOCAL_SQL_USER, LOCAL_SQL_PASS, LOCAL_SQL_DB")
+        print("  (or REMOTE_SQL_* for DB_MODE=remote)")
         return 1
 
     # Create components

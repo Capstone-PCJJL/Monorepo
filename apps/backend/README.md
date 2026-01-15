@@ -91,27 +91,63 @@ Create a `.env` file in this directory (`apps/backend/`).
 
 ### Database (Required)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SQL_HOST` | `localhost` | MySQL server hostname |
-| `SQL_PORT` | `3306` | MySQL server port |
-| `SQL_USER` | - | Database username |
-| `SQL_PASS` | - | Database password |
-| `SQL_DB` | - | Database name |
+Switch between local and remote databases by changing `DB_MODE`:
 
-**Local development with Docker:**
+```env
+DB_MODE=local   # Uses LOCAL_SQL_* variables
+DB_MODE=remote  # Uses REMOTE_SQL_* variables
+```
+
+#### Local Docker Database (Development)
+
+```env
+DB_MODE=local
+LOCAL_SQL_HOST=localhost
+LOCAL_SQL_PORT=3306
+LOCAL_SQL_USER=root
+LOCAL_SQL_PASS=password
+LOCAL_SQL_DB=tmdb
+```
+
+From the monorepo root:
 ```bash
-docker run -d --name mysql \
-  -e MYSQL_ROOT_PASSWORD=password \
-  -e MYSQL_DATABASE=tmdb \
-  -p 3306:3306 \
-  mysql:8
+docker-compose up db -d   # Auto-seeds ~10k movies on first run
+```
 
-# Then use:
-# SQL_HOST=localhost
-# SQL_USER=root
-# SQL_PASS=password
-# SQL_DB=tmdb
+#### AWS RDS (Production/Staging)
+
+```env
+DB_MODE=remote
+REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
+REMOTE_SQL_PORT=3306
+REMOTE_SQL_USER=your_rds_username
+REMOTE_SQL_PASS=your_rds_password
+REMOTE_SQL_DB=tmdb
+```
+
+#### Quick Reference
+
+| Mode | Command |
+|------|---------|
+| `DB_MODE=local` | `docker-compose up -d` |
+| `DB_MODE=remote` | `docker-compose up backend frontend -d` |
+
+#### Generating Seed Data
+
+To update the local development seed data:
+```bash
+# Temporarily switch to remote to export from production
+# Edit .env: DB_MODE=remote
+
+# Export top 10,000 movies
+python scripts/export_seed_data.py --limit 10000
+
+# Switch back to local
+# Edit .env: DB_MODE=local
+
+# Commit the new seed file
+git add ../../docker/mysql/init/02-seed.sql.gz
+git commit -m "Update local dev seed data"
 ```
 
 ---
@@ -134,12 +170,20 @@ API_KEY=abc123def456
 TMDB_BEARER_TOKEN=eyJhbGciOiJIUzI1NiJ9...
 BASE_URL=https://api.themoviedb.org/3
 
-# Database
-SQL_HOST=localhost
-SQL_PORT=3306
-SQL_USER=root
-SQL_PASS=your_db_password
-SQL_DB=tmdb_pipeline
+# Database - switch mode: local or remote
+DB_MODE=local
+
+LOCAL_SQL_HOST=localhost
+LOCAL_SQL_PORT=3306
+LOCAL_SQL_USER=root
+LOCAL_SQL_PASS=password
+LOCAL_SQL_DB=tmdb
+
+REMOTE_SQL_HOST=your-rds-endpoint.amazonaws.com
+REMOTE_SQL_PORT=3306
+REMOTE_SQL_USER=admin
+REMOTE_SQL_PASS=your_password
+REMOTE_SQL_DB=tmdb
 
 # API Server (optional)
 API_HOST=0.0.0.0

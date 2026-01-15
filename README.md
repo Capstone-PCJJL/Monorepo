@@ -25,44 +25,98 @@ Monorepo/
 
 ### Prerequisites
 
-- Node.js 18+ (frontend)
-- Python 3.11+ (backend)
-- MySQL 8+ (database)
-- Docker & Docker Compose (optional)
+- Docker & Docker Compose
+- Node.js 18+ (for local frontend development without Docker)
+- Python 3.11+ (for local backend development without Docker)
 
-### Option 1: Docker Compose (Recommended)
+### Option 1: Local Docker Database (Recommended for Development)
+
+The fastest way to get started. Docker automatically seeds ~5k movies from AWS RDS on first run.
 
 ```bash
-# Clone the repository
+# Clone and configure
 git clone <repository-url>
 cd Monorepo
-
-# Copy and configure environment
 cp .env.example .env
-# Edit .env with your credentials (see Environment Variables below)
+# Edit .env: Add all credentials (Firebase, TMDB API, AWS RDS)
 
-# With external database (AWS RDS, etc.)
-docker-compose up backend frontend
-
-# Or with local MySQL container (starts all services)
-docker-compose up
+# Start everything (first run seeds from AWS RDS, ~1-2 minutes)
+docker-compose up -d
 
 # Access:
 # - Frontend: http://localhost:3000
 # - Backend API: http://localhost:8000/api/docs
 ```
 
-### Option 2: Manual Setup
+> **Note**: First run automatically pulls ~5k movies from AWS RDS. Subsequent runs are instant since data persists in Docker volume.
 
-#### Database
+**Re-seed database** (after schema changes or to get fresh data):
+```bash
+docker-compose run --rm seeder --force    # Re-seed with fresh data from AWS
+```
+
+**Daily development:**
+```bash
+docker-compose up -d      # Start (instant after first run)
+docker-compose down       # Stop (data persists)
+docker-compose down -v    # Reset database (re-seeds on next start)
+```
+
+**View logs:**
+```bash
+docker-compose logs seeder       # Seeder output
+docker-compose logs backend      # API logs
+docker-compose logs -f backend   # Follow logs in real-time
+```
+
+**Clear Docker cache:**
+```bash
+docker system prune       # Remove unused containers, networks, images
+docker system prune -a    # Remove ALL unused images (reclaim disk space)
+docker volume prune       # Remove unused volumes
+docker builder prune      # Clear build cache
+```
+
+### Option 2: AWS RDS Database (Production/Staging)
+
+Connect to your AWS RDS instance instead of local Docker MySQL.
 
 ```bash
-# Using Docker
+# Clone and configure
+git clone <repository-url>
+cd Monorepo
+cp .env.example .env
+
+# Edit .env:
+#   DB_MODE=remote
+#   REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
+#   REMOTE_SQL_USER=your_rds_username
+#   REMOTE_SQL_PASS=your_rds_password
+
+# Start without local database
+docker-compose up backend frontend -d
+
+# Access:
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:8000/api/docs
+```
+
+### Option 3: Manual Setup (No Docker)
+
+For development without Docker.
+
+#### Database (choose one)
+
+```bash
+# Local Docker MySQL (requires seed file - see Option 1)
 docker run -d --name mysql \
   -e MYSQL_ROOT_PASSWORD=password \
   -e MYSQL_DATABASE=tmdb \
   -p 3306:3306 \
+  -v $(pwd)/docker/mysql/init:/docker-entrypoint-initdb.d:ro \
   mysql:8
+
+# Or use AWS RDS (set DB_MODE=remote in .env)
 ```
 
 #### Backend
@@ -76,13 +130,6 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Setup database (reads .env from monorepo root automatically)
-python -m tmdb_pipeline setup
-
-# Run initial data import (test with 5 movies)
-python -m tmdb_pipeline initial --test-limit 5
-python -m tmdb_pipeline approve
 
 # Start API server
 uvicorn api.main:app --reload --port 8000
@@ -100,6 +147,20 @@ npm install
 npm run dev
 ```
 
+### Switching Databases
+
+Just change `DB_MODE` in `.env`:
+
+```env
+DB_MODE=local   # Uses LOCAL_SQL_* variables (Docker MySQL)
+DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
+```
+
+| Mode | Command | Best For |
+|------|---------|----------|
+| `DB_MODE=local` | `docker-compose up -d` | Development |
+| `DB_MODE=remote` | `docker-compose up backend frontend -d` | Production |
+
 ## Environment Variables
 
 See [.env.example](.env.example) for the complete template with inline instructions.
@@ -113,13 +174,15 @@ See [.env.example](.env.example) for the complete template with inline instructi
 
 ### MySQL Database
 
+Use `DB_MODE` to switch between local Docker and AWS RDS:
+
 | Variable | Description |
 |----------|-------------|
-| `SQL_HOST` | `localhost` (local), `db` (docker-compose), or RDS endpoint |
-| `SQL_PORT` | Default: `3306` |
-| `SQL_USER` | Your database username |
-| `SQL_PASS` | Your database password |
-| `SQL_DB` | Database name (create with `CREATE DATABASE tmdb;`) |
+| `DB_MODE` | `local` (Docker MySQL) or `remote` (AWS RDS) |
+| `LOCAL_SQL_*` | Local Docker database credentials (used when `DB_MODE=local`) |
+| `REMOTE_SQL_*` | AWS RDS credentials (used when `DB_MODE=remote`) |
+
+See [.env.example](.env.example) for all database variables.
 
 ### Firebase Authentication (Frontend)
 

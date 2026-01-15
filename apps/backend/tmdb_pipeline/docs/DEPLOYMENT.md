@@ -4,6 +4,24 @@ Deploy the TMDB backend for long-running ingestion tasks and hosting the API. Th
 
 > **Note**: This is part of a monorepo. See the [root README](../../../../README.md) for full project documentation.
 
+## Database Configuration
+
+The application supports two database modes, controlled by `DB_MODE` in `.env`:
+
+```env
+DB_MODE=local   # Uses LOCAL_SQL_* variables (Docker MySQL)
+DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
+```
+
+| Mode | Use Case | Command |
+|------|----------|---------|
+| `local` | Development with Docker MySQL | `docker-compose up -d` |
+| `remote` | Production with AWS RDS | `docker-compose up backend frontend -d` |
+
+See the [backend README](../../README.md#database-required) for full configuration details.
+
+---
+
 ## Deployment Options
 
 | Option | Best For |
@@ -75,11 +93,13 @@ FLUSH PRIVILEGES;
 
 **Update `.env`:**
 ```env
-SQL_HOST=localhost
-SQL_PORT=3306
-SQL_USER=tmdb_user
-SQL_PASS=your_password
-SQL_DB=tmdb_movies
+DB_MODE=local
+
+LOCAL_SQL_HOST=localhost
+LOCAL_SQL_PORT=3306
+LOCAL_SQL_USER=tmdb_user
+LOCAL_SQL_PASS=your_password
+LOCAL_SQL_DB=tmdb_movies
 ```
 
 ### 5. Initialize and Test
@@ -308,11 +328,13 @@ Add inbound rule: MySQL (3306) from EC2 security group
 ### Update `.env`
 
 ```env
-SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
-SQL_PORT=3306
-SQL_USER=admin
-SQL_PASS=your_password
-SQL_DB=tmdb_movies
+DB_MODE=remote
+
+REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
+REMOTE_SQL_PORT=3306
+REMOTE_SQL_USER=admin
+REMOTE_SQL_PASS=your_password
+REMOTE_SQL_DB=tmdb_movies
 ```
 
 ---
@@ -406,10 +428,15 @@ Add a cron container to `docker-compose.yml`:
       # Same env vars as backend
       - API_KEY=${API_KEY}
       - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN}
-      - SQL_HOST=db
-      - SQL_USER=${SQL_USER:-root}
-      - SQL_PASS=${SQL_PASS:-password}
-      - SQL_DB=${SQL_DB:-tmdb}
+      - DB_MODE=${DB_MODE:-local}
+      - LOCAL_SQL_HOST=${LOCAL_SQL_HOST:-localhost}
+      - LOCAL_SQL_USER=${LOCAL_SQL_USER:-root}
+      - LOCAL_SQL_PASS=${LOCAL_SQL_PASS:-password}
+      - LOCAL_SQL_DB=${LOCAL_SQL_DB:-tmdb}
+      - REMOTE_SQL_HOST=${REMOTE_SQL_HOST}
+      - REMOTE_SQL_USER=${REMOTE_SQL_USER}
+      - REMOTE_SQL_PASS=${REMOTE_SQL_PASS}
+      - REMOTE_SQL_DB=${REMOTE_SQL_DB:-tmdb}
     depends_on:
       - db
 ```
@@ -425,7 +452,8 @@ Best for minimal maintenance - no server to manage.
 
 **Environment Variables** (set in Lambda configuration):
 - `API_KEY`, `TMDB_BEARER_TOKEN`
-- `SQL_HOST`, `SQL_USER`, `SQL_PASS`, `SQL_DB`
+- `DB_MODE=remote`
+- `REMOTE_SQL_HOST`, `REMOTE_SQL_USER`, `REMOTE_SQL_PASS`, `REMOTE_SQL_DB`
 
 **EventBridge Schedule:**
 1. Go to **AWS EventBridge -> Rules -> Create Rule**

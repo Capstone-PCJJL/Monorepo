@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY tmdb_pipeline/ ./tmdb_pipeline/
 COPY api/ ./api/
 COPY tests/ ./tests/
+COPY scripts/ ./scripts/
 
 # Create logs directory
 RUN mkdir -p tmdb_pipeline/logs
@@ -31,6 +32,9 @@ if [ "$1" = "api" ]; then\n\
 elif [ "$1" = "test" ]; then\n\
     shift\n\
     exec pytest "$@"\n\
+elif [ "$1" = "seed" ]; then\n\
+    shift\n\
+    exec python scripts/seed_from_remote.py "$@"\n\
 else\n\
     exec python -m tmdb_pipeline "$@"\n\
 fi' > /entrypoint.sh && chmod +x /entrypoint.sh
