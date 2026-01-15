@@ -1,0 +1,136 @@
+/* CinemaStack Modern Sign Up Styles */
+
+.container_s {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1E003F 0%, #000000 100%);
+  padding: 0;
+}
+
+.form {
+  background: rgba(30, 0, 63, 0.85);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  border-radius: 24px;
+  padding: 40px 32px 32px 32px;
+  max-width: 520px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form h1 {
+  color: #fff;
+  font-size: 2.2em;
+  margin-bottom: 32px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(30,0,63,0.2);
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 1.5px solid #DEC4FF;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 1.08em;
+  font-family: 'Inter', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  border-color: #8e24aa;
+  background: rgba(255,255,255,0.15);
+}
+
+.error {
+  color: #ff6b81;
+  font-size: 0.95em;
+  margin-top: 5px;
+  text-align: center;
+  font-weight: 500;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-btn {
+  width: auto;
+  min-width: 2in;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 16px 0;
+  background: linear-gradient(90deg, #6B00B2 0%, #DEC4FF 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.15em;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 15px rgba(107, 0, 178, 0.15);
+  transition: background 0.3s, color 0.3s;
+  display: block;
+}
+
+.signup-btn:hover:not(:disabled) {
+  background: linear-gradient(90deg, #8e24aa 0%, #DEC4FF 100%);
+  color: #fff;
+}
+
+.signup-btn:disabled {
+  background: #cccccc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.signup-footer {
+  margin-top: 18px;
+  text-align: center;
+  width: 100%;
+}
+
+.signup-footer a {
+  color: #DEC4FF;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.2s;
+}
+
+.signup-footer a:hover {
+  text-decoration: underline;
+  color: #fff;
+}
+
+.signup-footer p {
+  margin: 0;
+  color: #fff;
+  font-size: 1em;
+}
+
+@media (max-width: 500px) {
+  .form {
+    padding: 24px 8px 16px 8px;
+    border-radius: 16px;
+  }
+  .form h1 {
+    font-size: 1.5em;
+  }
+}

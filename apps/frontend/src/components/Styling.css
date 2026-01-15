@@ -1,0 +1,261 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1c1b2d;
+  padding: 0 2rem;
+  height: 60px;
+}
+
+.navbar-logo {
+  height: 40px;
+  width: 40px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links li a {
+  text-decoration: none;
+  color: #ccc;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.navbar-links li a.active {
+  color: white;
+  font-weight: bold;
+}
+
+.navbar-profile {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-profile-icon {
+  font-size: 1.5rem;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.navbar-profile a.active .navbar-profile-icon {
+  color: white;
+  font-weight: bold;
+  font-size: 1.8rem;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #1c1b2d, #3420b7);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex-grow: 1;
+  margin-top: 1rem;
+}
+
+.movie-card {
+  display: flex;
+  flex-direction: row;
+  height: 300px;
+  border-radius: 15px;
+  background-color: #3b2e5a;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  width: 95%;
+  box-sizing: border-box;
+  color: white;
+  margin: 0 auto 1rem auto;
+  position: relative;
+}
+
+.movie-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+  flex-grow: 1;
+  height: 100%;
+}
+
+.movie-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.movie-date {
+  font-size: 1.5rem;
+  color: white;
+  opacity: 0.6;
+}
+
+.movie-overview {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+  color: #ccc;
+  font-style: italic;
+  margin-bottom: 0;
+}
+
+.movie-poster {
+  height: 100%;
+  width: auto;
+  border-radius: 10px;
+  margin-right: 1rem;
+}
+
+.movie-genres {
+  font-size: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.genre-label {
+  color: white;
+  font-weight: bold;
+}
+
+.genre-list {
+  color: #d8b4fe; /* Light purple */
+}
+
+.movie-runtime {
+  font-size: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.runtime-label {
+  color: white;
+  font-weight: bold;
+}
+
+.runtime-list {
+  color: #d8b4fe;
+}
+
+.movie-credits {
+  font-size: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.movie-actors {
+  font-size: 1.25rem;
+}
+
+.actors-label {
+  color: white;
+  font-weight: bold;
+}
+
+.actors-names {
+  color: #d8b4fe;
+}
+
+.movie-director {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.director-label {
+  color: white;
+  font-weight: bold;
+}
+
+.director-name {
+  color: #d8b4fe;
+}
+
+.loading-screen {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f0f0f;
+  color: white;
+  font-family: sans-serif;
+} 
+
+.remove-from-watchlist-button {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  color: rgb(0, 0, 0);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.remove-from-watchlist-button:hover {
+  background-color: #ff5e5e;
+  color: white;
+}
+
+.not-interested-button {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  color: rgb(0, 0, 0);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.not-interested-button:hover {
+  background-color: #7e7e7e;
+  color: white;
+}
+
+.movie-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Profile page */
+.profile-container {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: white;
+  background-color: #e50914;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #b2070f;
+}
+

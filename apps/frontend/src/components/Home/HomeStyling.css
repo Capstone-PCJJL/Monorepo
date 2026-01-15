@@ -1,0 +1,177 @@
+.recommendation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 20px 1.5rem 20px;
+  }
+  
+  .recommendation-title {
+    color: white;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .refresh-button {
+    background-color: #4d4d4e;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .refresh-button:hover {
+    background-color: #666;
+  }
+
+  .home-card {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: row;
+    height: 75vh;
+    border-radius: 15px;
+    background-color: #3b2e5a;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    width: 95%;
+    box-sizing: border-box;
+    color: white;
+    margin: 0 auto 1rem auto;
+    position: relative;
+  }
+
+  .button-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .add-to-watchlist-button {
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    color: rgb(0, 0, 0);
+    background-color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .add-to-watchlist-button:hover {
+    background-color: #7e7e7e;
+  }
+  
+  .not-interested-button {
+    padding: 0.25rem 0.5rem;
+    font-size: 1.25rem;
+    color: white;
+    background-color: #d9534f;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .not-interested-button:hover {
+    background-color: #c9302c;
+  }
+  
+  .movie-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0;
+  }
+  
+  .movie-rating label {
+    font-size: 1.25rem;
+    color: #ddd;
+    margin: 0;
+  }
+  
+  .movie-rating select {
+    width: 150px;
+    padding: 0.25rem;
+    font-size: 1.25rem;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #2c2541;
+    color: #fff;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  
+  .movie-rating select:focus {
+    border-color: #7161a0;
+    box-shadow: 0 0 5px #7161a0;
+  }
+
+  .navigation-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-left: 20px;
+    margin-top: 1rem;
+  }
+  
+  .nav-button {
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background-color: #6c63ff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .nav-button:hover {
+    background-color: #574fd6;
+  }
+  
+  .nav-button:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .confirm-rating-button {
+    margin-left: 10px;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .confirm-rating-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .like-button {
+    background-color: #e91e63; /* rose pink */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .like-button:hover {
+    background-color: #a71047; /* darker rose */
+  }
+  
+  .heart-icon {
+    color: white;
+    font-size: 16px;
+  }

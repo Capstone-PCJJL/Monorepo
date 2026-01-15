@@ -1,0 +1,87 @@
+# =============================================================================
+# Monorepo Docker Compose
+# =============================================================================
+# Usage:
+#   docker-compose up              # Start all services
+#   docker-compose up -d           # Start in background
+#   docker-compose up backend      # Start backend only
+#   docker-compose down            # Stop all services
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: mysql:8
+    container_name: monorepo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SQL_PASS:-password}
+      MYSQL_DATABASE: ${SQL_DB:-tmdb}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Backend API & Pipeline
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: monorepo-backend
+    restart: unless-stopped
+    command: api
+    environment:
+      - API_KEY=${API_KEY}
+      - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN}
+      - BASE_URL=${BASE_URL:-https://api.themoviedb.org/3}
+      - SQL_HOST=${SQL_HOST:-db}
+      - SQL_PORT=${SQL_PORT:-3306}
+      - SQL_USER=${SQL_USER:-root}
+      - SQL_PASS=${SQL_PASS:-password}
+      - SQL_DB=${SQL_DB:-tmdb}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
+    ports:
+      - "8000:8000"
+    # Uncomment below if using the local db container instead of external database
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Development with Vite)
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: node:20-alpine
+    container_name: monorepo-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - API_PROXY_TARGET=${API_PROXY_TARGET:-http://backend:8000}
+      - VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}
+      - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
+      - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}
+      - VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET}
+      - VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID}
+      - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}
+      - VITE_FIREBASE_MEASUREMENT_ID=${VITE_FIREBASE_MEASUREMENT_ID}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
