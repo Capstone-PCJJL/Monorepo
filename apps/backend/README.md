@@ -111,7 +111,7 @@ LOCAL_SQL_DB=tmdb
 
 From the monorepo root:
 ```bash
-docker-compose up db -d   # Auto-seeds ~10k movies on first run
+make up-local   # Auto-seeds ~5k movies on first run, displays URLs
 ```
 
 #### AWS RDS (Production/Staging)
@@ -127,10 +127,12 @@ REMOTE_SQL_DB=tmdb
 
 #### Quick Reference
 
-| Mode | Command |
-|------|---------|
-| `DB_MODE=local` | `docker-compose up -d` |
-| `DB_MODE=remote` | `docker-compose up backend frontend -d` |
+| Mode | Command | Profile |
+|------|---------|---------|
+| `DB_MODE=local` | `make up-local` | `--profile local` (db + seeder) |
+| `DB_MODE=remote` | `make up-remote` | No profile (backend + frontend only) |
+
+> **Note**: The `db` and `seeder` services use Docker Compose profiles. They only start when the `local` profile is activated.
 
 #### Generating Seed Data
 

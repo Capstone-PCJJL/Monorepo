@@ -68,8 +68,16 @@ npm run dev
 From the monorepo root:
 
 ```bash
-docker-compose up backend frontend
+make up-local   # Local development with Docker MySQL (uses --profile local)
+make up-remote  # Production with AWS RDS (backend + frontend only)
 ```
+
+> **Note**: `make up-local` activates the `local` profile which starts `db` and `seeder` services. `make up-remote` skips these.
+
+This starts services and displays URLs:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- API Docs: http://localhost:8000/api/docs
 
 ## Tech Stack
 

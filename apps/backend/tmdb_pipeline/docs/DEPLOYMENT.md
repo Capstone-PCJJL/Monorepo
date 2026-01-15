@@ -13,10 +13,12 @@ DB_MODE=local   # Uses LOCAL_SQL_* variables (Docker MySQL)
 DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
 ```
 
-| Mode | Use Case | Command |
-|------|----------|---------|
-| `local` | Development with Docker MySQL | `docker-compose up -d` |
-| `remote` | Production with AWS RDS | `docker-compose up backend frontend -d` |
+| Mode | Use Case | Command | Profile |
+|------|----------|---------|---------|
+| `local` | Development with Docker MySQL | `make up-local` | `--profile local` |
+| `remote` | Production with AWS RDS | `make up-remote` | No profile |
+
+> **Docker Compose Profiles**: The `db` and `seeder` services have `profiles: [local]`. They only start when the `local` profile is activated via `make up-local` (which runs `docker-compose --profile local up -d`).
 
 See the [backend README](../../README.md#database-required) for full configuration details.
 
@@ -152,7 +154,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 **Option C: Docker Compose**
 ```bash
 cd /path/to/Monorepo
-docker-compose up -d
+make up-local   # or make up-remote for AWS RDS
 ```
 
 ### 7. Automate Daily Updates

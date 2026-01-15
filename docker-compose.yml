@@ -2,6 +2,13 @@
 # Monorepo Docker Compose
 # =============================================================================
 #
+# LOCAL URLS:
+#
+#   Frontend:   http://localhost:3000
+#   Backend:    http://localhost:8000
+#   API Docs:   http://localhost:8000/api/docs
+#   MySQL:      localhost:3306
+#
 # SWITCHING DATABASES - Just change DB_MODE in .env:
 #
 #   DB_MODE=local   -> Uses LOCAL_SQL_* variables (Docker MySQL)
@@ -9,12 +16,24 @@
 #
 # COMMANDS:
 #
-#   Start:
-#     docker-compose up -d                    # Start all (db + backend + frontend)
-#     docker-compose up db -d                 # Start database only
-#     docker-compose up backend frontend -d   # Skip local db (use AWS RDS)
+#   Local Development (Docker MySQL):
+#     make up-local                           # Start all with local DB
+#     make down-local                         # Stop all services
+#     make restart-local                      # Restart all services
+#     make clean-local                        # Stop + delete volumes + prune
 #
-#   Stop:
+#   Remote/Production (AWS RDS):
+#     make up-remote                          # Start frontend + backend only
+#     make down-remote                        # Stop frontend + backend
+#     make restart-remote                     # Restart frontend + backend
+#     make clean-remote                       # Remove frontend + backend containers
+#
+#   Other:
+#     make logs                               # Follow container logs
+#
+#   Docker Compose (alternative):
+#     docker-compose --profile local up -d    # Start all with local DB
+#     docker-compose up backend frontend -d   # Start frontend + backend only (AWS RDS)
 #     docker-compose down                     # Stop all services
 #     docker-compose down -v                  # Stop + delete database volume
 #
@@ -38,6 +57,7 @@ services:
   #   docker-compose up backend frontend -d
   # ---------------------------------------------------------------------------
   db:
+    profiles: [local]
     image: mysql:8
     container_name: monorepo-mysql
     restart: unless-stopped
@@ -62,6 +82,7 @@ services:
   # To re-seed (after schema changes): docker-compose run --rm seeder --force
   # ---------------------------------------------------------------------------
   seeder:
+    profiles: [local]
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
@@ -122,9 +143,6 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "8000:8000"
-    depends_on:
-      seeder:
-        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # Frontend (Development with Vite)

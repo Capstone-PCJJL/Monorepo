@@ -41,32 +41,54 @@ cp .env.example .env
 # Edit .env: Add all credentials (Firebase, TMDB API, AWS RDS)
 
 # Start everything (first run seeds from AWS RDS, ~1-2 minutes)
-docker-compose up -d
+make up-local
+```
 
-# Access:
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000/api/docs
+This outputs:
+```
+=========================================
+  Services are starting...
+=========================================
+
+  Frontend:   http://localhost:3000
+  Backend:    http://localhost:8000
+  API Docs:   http://localhost:8000/api/docs
+  MySQL:      localhost:3306
+
+=========================================
 ```
 
 > **Note**: First run automatically pulls ~5k movies from AWS RDS. Subsequent runs are instant since data persists in Docker volume.
 
+> **How it works**: The `db` and `seeder` services use Docker Compose profiles. `make up-local` activates the `local` profile, starting all services. `make up-remote` skips the profile, starting only backend + frontend.
+
 **Re-seed database** (after schema changes or to get fresh data):
 ```bash
-docker-compose run --rm seeder --force    # Re-seed with fresh data from AWS
+docker-compose --profile local run --rm seeder --force    # Re-seed with fresh data from AWS
 ```
 
-**Daily development:**
+**Daily development (local DB):**
 ```bash
-docker-compose up -d      # Start (instant after first run)
-docker-compose down       # Stop (data persists)
-docker-compose down -v    # Reset database (re-seeds on next start)
+make up-local       # Start all services with local MySQL
+make down-local     # Stop all services (data persists)
+make restart-local  # Restart all services
+make clean-local    # Stop + delete volumes + prune
+make logs           # Follow container logs
+```
+
+**Daily development (remote DB):**
+```bash
+make up-remote       # Start frontend + backend only (uses AWS RDS)
+make down-remote     # Stop frontend + backend
+make restart-remote  # Restart frontend + backend
+make clean-remote    # Stop + remove frontend + backend containers
 ```
 
 **View logs:**
 ```bash
-docker-compose logs seeder       # Seeder output
-docker-compose logs backend      # API logs
-docker-compose logs -f backend   # Follow logs in real-time
+docker-compose --profile local logs seeder   # Seeder output (local profile only)
+docker-compose logs backend                  # API logs
+docker-compose logs -f backend               # Follow logs in real-time
 ```
 
 **Clear Docker cache:**
@@ -94,12 +116,15 @@ cp .env.example .env
 #   REMOTE_SQL_PASS=your_rds_password
 
 # Start without local database
-docker-compose up backend frontend -d
-
-# Access:
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000/api/docs
+make up-remote
 ```
+
+**Local URLs:**
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/api/docs |
 
 ### Option 3: Manual Setup (No Docker)
 
@@ -158,8 +183,8 @@ DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
 
 | Mode | Command | Best For |
 |------|---------|----------|
-| `DB_MODE=local` | `docker-compose up -d` | Development |
-| `DB_MODE=remote` | `docker-compose up backend frontend -d` | Production |
+| `DB_MODE=local` | `make up-local` | Development |
+| `DB_MODE=remote` | `make up-remote` | Production |
 
 ## Environment Variables
 
