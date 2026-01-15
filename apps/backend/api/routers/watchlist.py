@@ -4,6 +4,8 @@ Watchlist endpoints.
 Handles user watchlist and not-interested functionality.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 
@@ -18,6 +20,7 @@ from api.schemas.user import SuccessResponse
 from tmdb_pipeline.database import DatabaseManager
 
 router = APIRouter()
+logger = logging.getLogger("api.watchlist")
 
 
 @router.get("/users/{user_id}/watchlist", response_model=WatchlistResponse)
@@ -72,13 +75,16 @@ async def add_to_watchlist(
                 {"user_id": user_id, "movie_id": request.movie_id}
             )
             conn.commit()
+            logger.info(f"Watchlist add: user_id={user_id} movie_id={request.movie_id}")
             return SuccessResponse()
         except Exception as e:
             if "Duplicate entry" in str(e):
+                logger.warning(f"Watchlist duplicate: user_id={user_id} movie_id={request.movie_id}")
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Movie already in watchlist"
                 )
+            logger.error(f"Watchlist add failed: user_id={user_id} movie_id={request.movie_id} error={e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to add movie to watchlist"
@@ -102,11 +108,13 @@ async def remove_from_watchlist(
         conn.commit()
 
         if result.rowcount == 0:
+            logger.warning(f"Watchlist remove failed: user_id={user_id} movie_id={movie_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Movie not found in watchlist"
             )
 
+        logger.info(f"Watchlist remove: user_id={user_id} movie_id={movie_id}")
         return SuccessResponse()
 
 
@@ -126,13 +134,16 @@ async def mark_not_interested(
                 {"user_id": user_id, "movie_id": request.movie_id}
             )
             conn.commit()
+            logger.info(f"Not interested: user_id={user_id} movie_id={request.movie_id}")
             return SuccessResponse()
         except Exception as e:
             if "Duplicate entry" in str(e):
+                logger.warning(f"Not interested duplicate: user_id={user_id} movie_id={request.movie_id}")
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Movie already marked as not interested"
                 )
+            logger.error(f"Not interested failed: user_id={user_id} movie_id={request.movie_id} error={e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to mark movie as not interested"

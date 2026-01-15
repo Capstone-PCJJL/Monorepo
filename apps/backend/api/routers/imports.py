@@ -17,7 +17,7 @@ from api.services.fuzzy_match import fuzzy_match_ratings, fuzzy_match_likes
 from tmdb_pipeline.database import DatabaseManager
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("api.imports")
 
 # Thread pool for background tasks
 executor = ThreadPoolExecutor(max_workers=2)
@@ -87,7 +87,10 @@ async def import_csv(
 
     After import, fuzzy matching runs in the background.
     """
+    logger.info(f"Import started: user_id={user_id} table={request.table} rows={len(request.data)}")
+
     if not request.data:
+        logger.warning(f"Import failed: user_id={user_id} no data provided")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No data provided"
@@ -157,6 +160,8 @@ async def import_csv(
 
     # Run fuzzy matching in background (don't block response)
     executor.submit(run_fuzzy_match_background, user_id, request.table, db)
+
+    logger.info(f"Import completed: user_id={user_id} table={request.table} inserted={inserted}")
 
     return ImportResponse(
         message=f"{request.table} CSV imported successfully (fuzzy matching in progress)",

@@ -4,6 +4,8 @@ User management endpoints.
 Handles user creation, consent, and import status.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 
@@ -18,6 +20,7 @@ from api.schemas.user import (
 from tmdb_pipeline.database import DatabaseManager
 
 router = APIRouter()
+logger = logging.getLogger("api.users")
 
 
 @router.post("/users/firebase", response_model=UserIdResponse, status_code=status.HTTP_200_OK)
@@ -40,6 +43,7 @@ async def get_or_create_user(
         row = result.fetchone()
 
         if row:
+            logger.info(f"Existing user found: user_id={row[0]}")
             return UserIdResponse(user_id=row[0])
 
         # Create new user
@@ -56,6 +60,7 @@ async def get_or_create_user(
         )
         row = result.fetchone()
 
+        logger.info(f"New user created: user_id={row[0]}")
         return UserIdResponse(user_id=row[0])
 
 
@@ -75,6 +80,7 @@ async def get_user_consent(
         row = result.fetchone()
 
         if not row:
+            logger.warning(f"Consent check failed: user_id={user_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
@@ -99,11 +105,13 @@ async def set_user_consent(
         conn.commit()
 
         if result.rowcount == 0:
+            logger.warning(f"Set consent failed: user_id={user_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
 
+        logger.info(f"User consent granted: user_id={user_id}")
         return SuccessResponse()
 
 
@@ -123,6 +131,7 @@ async def get_user_import_status(
         row = result.fetchone()
 
         if not row:
+            logger.warning(f"Import status check failed: user_id={user_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
@@ -147,9 +156,11 @@ async def set_user_import_status(
         conn.commit()
 
         if result.rowcount == 0:
+            logger.warning(f"Set import status failed: user_id={user_id} not found")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
 
+        logger.info(f"User import status set: user_id={user_id}")
         return SuccessResponse()
