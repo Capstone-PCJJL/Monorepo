@@ -5,7 +5,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Install system dependencies (mysql-client for database backup/restore)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -15,8 +20,8 @@ COPY api/ ./api/
 COPY tests/ ./tests/
 COPY scripts/ ./scripts/
 
-# Create logs directory
-RUN mkdir -p tmdb_pipeline/logs
+# Create logs and data directories
+RUN mkdir -p tmdb_pipeline/logs data
 
 # Environment
 ENV PYTHONUNBUFFERED=1

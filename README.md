@@ -58,21 +58,24 @@ This outputs:
 =========================================
 ```
 
-> **Note**: First run automatically pulls ~5k movies from AWS RDS. Subsequent runs are instant since data persists in Docker volume.
+> **Note**: First run pulls ~5k movies from AWS RDS and saves a local backup (`apps/backend/data/seed_backup.sql.gz`). Subsequent runs restore from this backup instantly - even after `docker system prune`.
 
 > **How it works**: The `db` and `seeder` services use Docker Compose profiles. `make up-local` activates the `local` profile, starting all services. `make up-remote` skips the profile, starting only backend + frontend.
 
 **Re-seed database** (after schema changes or to get fresh data):
 ```bash
-docker-compose --profile local run --rm seeder --force    # Re-seed with fresh data from AWS
+make seed-force    # Re-fetch from AWS RDS and update local backup
+make seed-status   # Check local backup status (size, date)
 ```
 
 **Daily development (local DB):**
 ```bash
-make up-local       # Start all services with local MySQL
+make up-local       # Start all services (restores from local backup if available)
 make down-local     # Stop all services (data persists)
 make restart-local  # Restart all services
-make clean-local    # Stop + delete volumes + prune
+make clean-local    # Stop + delete Docker volumes (local backup survives)
+make seed-force     # Re-fetch from AWS RDS + update local backup
+make seed-status    # Check local backup file info
 make logs           # Follow container logs
 ```
 

@@ -5,15 +5,21 @@ Seed local MySQL from AWS RDS.
 This script is called by Docker on first run to populate the local database
 with a subset of movies from the production AWS RDS database.
 
-It only runs if the local movies table is empty, so it's safe to run repeatedly.
+Data persistence strategy:
+- After seeding from remote, dumps the database to a local SQL file
+- On subsequent runs, restores from local dump (skips AWS RDS call)
+- Use --force to re-fetch from remote and update the local dump
 
 Usage:
     python scripts/seed_from_remote.py              # Default 10,000 movies
     python scripts/seed_from_remote.py --limit 5000 # Custom limit
+    python scripts/seed_from_remote.py --force      # Force re-fetch from AWS
 """
 
 import argparse
+import gzip
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -23,6 +29,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pymysql
 from dotenv import load_dotenv
+
+# Local backup directory and file
+DATA_DIR = Path(__file__).parent.parent / "data"
+DUMP_FILE = DATA_DIR / "seed_backup.sql.gz"
 
 
 def get_db_config(mode: str) -> dict:
@@ -70,6 +80,75 @@ def get_movie_count(config: dict) -> int:
         return count
     except pymysql.Error:
         return -1
+
+
+def dump_database(config: dict) -> bool:
+    """Dump local database to compressed SQL file."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(f"\nBacking up database to {DUMP_FILE}...")
+
+    cmd = [
+        "mysqldump",
+        f"--host={config['host']}",
+        f"--port={config['port']}",
+        f"--user={config['user']}",
+        f"--password={config['password']}",
+        "--ssl-mode=DISABLED",
+        "--single-transaction",
+        "--routines",
+        "--triggers",
+        config["database"],
+    ]
+
+    try:
+        # Run mysqldump and compress output
+        result = subprocess.run(cmd, capture_output=True, check=True)
+        with gzip.open(DUMP_FILE, "wb") as f:
+            f.write(result.stdout)
+
+        size_mb = DUMP_FILE.stat().st_size / (1024 * 1024)
+        print(f"Backup complete: {size_mb:.1f} MB")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: mysqldump failed: {e.stderr.decode()}")
+        return False
+    except FileNotFoundError:
+        print("WARNING: mysqldump not available, skipping backup")
+        return False
+
+
+def restore_from_dump(config: dict) -> bool:
+    """Restore database from compressed SQL dump."""
+    if not DUMP_FILE.exists():
+        return False
+
+    print(f"\nRestoring database from {DUMP_FILE}...")
+
+    cmd = [
+        "mysql",
+        f"--host={config['host']}",
+        f"--port={config['port']}",
+        f"--user={config['user']}",
+        f"--password={config['password']}",
+        "--ssl-mode=DISABLED",
+        config["database"],
+    ]
+
+    try:
+        # Decompress and pipe to mysql
+        with gzip.open(DUMP_FILE, "rb") as f:
+            sql_content = f.read()
+
+        result = subprocess.run(cmd, input=sql_content, capture_output=True, check=True)
+        print("Restore complete!")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"ERROR: mysql restore failed: {e.stderr.decode()}")
+        return False
+    except FileNotFoundError:
+        print("WARNING: mysql client not available")
+        return False
 
 
 def sync_schema(remote_conn, local_conn):
@@ -157,7 +236,7 @@ def main():
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Force seeding even if local database has data"
+        help="Force re-fetch from AWS RDS (updates local backup)"
     )
     args = parser.parse_args()
 
@@ -176,12 +255,6 @@ def main():
     local_config = get_db_config("local")
     remote_config = get_db_config("remote")
 
-    # Validate remote config
-    if not remote_config["host"]:
-        print("REMOTE_SQL_HOST not set. Skipping seed.")
-        print("(Set AWS RDS credentials in .env to enable auto-seeding)")
-        sys.exit(0)  # Exit successfully so docker-compose continues
-
     # Wait for local database
     print(f"\nConnecting to local database: {local_config['host']}:{local_config['port']}")
     if not wait_for_db(local_config):
@@ -191,9 +264,27 @@ def main():
 
     # Check if seeding is needed
     local_count = get_movie_count(local_config)
-    if local_count > 0 and not args.force:  # -1 = no table, 0 = empty table, >0 = has data
+    if local_count > 0 and not args.force:
         print(f"\nLocal database already has {local_count} movies.")
         print("Skipping seed. Use --force to re-seed.")
+        sys.exit(0)
+
+    # Strategy: Try local backup first (unless --force), then fall back to remote
+    if not args.force and DUMP_FILE.exists():
+        print(f"\nFound local backup: {DUMP_FILE}")
+        if restore_from_dump(local_config):
+            restored_count = get_movie_count(local_config)
+            print(f"\n{'=' * 60}")
+            print(f"Restored {restored_count} movies from local backup!")
+            print("=" * 60)
+            sys.exit(0)
+        else:
+            print("Local restore failed, falling back to remote...")
+
+    # Validate remote config (only needed if we're fetching from remote)
+    if not remote_config["host"]:
+        print("\nREMOTE_SQL_HOST not set. Skipping seed.")
+        print("(Set AWS RDS credentials in .env to enable auto-seeding)")
         sys.exit(0)
 
     # Connect to remote
@@ -261,8 +352,12 @@ def main():
     remote_conn.close()
     local_conn.close()
 
+    # Backup to local file for faster restores
+    dump_database(local_config)
+
     print("\n" + "=" * 60)
     print("Seeding complete!")
+    print(f"Local backup saved to: {DUMP_FILE}")
     print("=" * 60)
 
 

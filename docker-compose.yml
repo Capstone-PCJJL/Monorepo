@@ -101,6 +101,9 @@ services:
       - REMOTE_SQL_USER=${REMOTE_SQL_USER}
       - REMOTE_SQL_PASS=${REMOTE_SQL_PASS}
       - REMOTE_SQL_DB=${REMOTE_SQL_DB:-movie_capstone_db}
+    volumes:
+      # Persist seed backup locally (survives docker prune)
+      - ./apps/backend/data:/app/data
     depends_on:
       db:
         condition: service_healthy
