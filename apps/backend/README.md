@@ -121,6 +121,9 @@ docker-compose run --rm backend status
 docker-compose run --rm backend add-new
 docker-compose run --rm backend approve
 docker-compose run --rm backend approve --quick
+
+# Re-seed database (force re-download from AWS RDS)
+docker-compose --profile local run --rm seeder seed --force
 ```
 
 ## Running Tests
