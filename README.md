@@ -40,64 +40,45 @@ cd Monorepo
 cp .env.example .env
 # Edit .env: Add all credentials (Firebase, TMDB API, AWS RDS)
 
-# Start everything (first run seeds from AWS RDS, ~1-2 minutes)
-make up-local
+# Start everything - runs interactively (Ctrl+C to stop)
+DB_MODE=local docker-compose --profile local up
 ```
 
-This outputs:
-```
-=========================================
-  Services are starting...
-=========================================
+Services run at:
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:8000
+- **API Docs**: http://localhost:8000/api/docs
+- **MySQL**: localhost:3306
 
-  Frontend:   http://localhost:3000
-  Backend:    http://localhost:8000
-  API Docs:   http://localhost:8000/api/docs
-  MySQL:      localhost:3306
+> **Note**: First run pulls ~5k movies from AWS RDS and saves a local backup (`apps/backend/data/seed_backup.sql.gz`). Subsequent runs restore from this backup instantly.
 
-=========================================
-```
+> **How it works**: The `db` and `seeder` services use Docker Compose profiles. `--profile local` activates them. Omitting the profile starts only backend + frontend.
 
-> **Note**: First run pulls ~5k movies from AWS RDS and saves a local backup (`apps/backend/data/seed_backup.sql.gz`). Subsequent runs restore from this backup instantly - even after `docker system prune`.
-
-> **How it works**: The `db` and `seeder` services use Docker Compose profiles. `make up-local` activates the `local` profile, starting all services. `make up-remote` skips the profile, starting only backend + frontend.
-
-**Re-seed database** (after schema changes or to get fresh data):
+**Daily development:**
 ```bash
-make seed-force    # Re-fetch from AWS RDS and update local backup
-make seed-status   # Check local backup status (size, date)
-```
+# Start (local DB) - interactive, logs stream to terminal
+DB_MODE=local docker-compose --profile local up
 
-**Daily development (local DB):**
-```bash
-make up-local       # Start all services (restores from local backup if available)
-make down-local     # Stop all services (data persists)
-make restart-local  # Restart all services
-make clean-local    # Stop + delete Docker volumes (local backup survives)
-make seed-force     # Re-fetch from AWS RDS + update local backup
-make seed-status    # Check local backup file info
-make logs           # Follow container logs
-```
+# Start (remote DB) - connects to AWS RDS
+DB_MODE=remote docker-compose up backend frontend
 
-**Daily development (remote DB):**
-```bash
-make up-remote       # Start frontend + backend only (uses AWS RDS)
-make down-remote     # Stop frontend + backend
-make restart-remote  # Restart frontend + backend
-make clean-remote    # Stop + remove frontend + backend containers
-```
+# Rebuild after code changes (local)
+DB_MODE=local docker-compose --profile local up --build
 
-**View logs:**
-```bash
-docker-compose --profile local logs seeder   # Seeder output (local profile only)
-docker-compose logs backend                  # API logs
-docker-compose logs -f backend               # Follow logs in real-time
+# Rebuild after code changes (remote)
+DB_MODE=remote docker-compose up backend frontend --build
+
+# Stop (or just Ctrl+C)
+docker-compose --profile local down   # local
+docker-compose down                   # remote
+
+# Stop + delete volumes (forces fresh seed on next start)
+docker-compose --profile local down -v
 ```
 
 **Clear Docker cache:**
 ```bash
-docker system prune       # Remove unused containers, networks, images
-docker system prune -a    # Remove ALL unused images (reclaim disk space)
+docker system prune -a    # Remove ALL unused images, containers, networks (frees disk space)
 docker volume prune       # Remove unused volumes
 docker builder prune      # Clear build cache
 ```
@@ -117,8 +98,8 @@ cp .env.example .env
 #   REMOTE_SQL_USER=your_rds_username
 #   REMOTE_SQL_PASS=your_rds_password
 
-# Start without local database (automatically uses remote DB)
-make up-remote
+# Start without local database - runs interactively (Ctrl+C to stop)
+DB_MODE=remote docker-compose up backend frontend
 ```
 
 **Local URLs:**
@@ -143,7 +124,7 @@ docker run -d --name mysql \
   -v $(pwd)/docker/mysql/init:/docker-entrypoint-initdb.d:ro \
   mysql:8
 
-# Or use AWS RDS (use make up-remote)
+# Or use AWS RDS (see Option 2)
 ```
 
 #### Backend
@@ -176,12 +157,12 @@ npm run dev
 
 ### Switching Databases
 
-Just use the appropriate make command - `DB_MODE` is set automatically:
+Set `DB_MODE` when running docker-compose:
 
 | Command | Database | Best For |
 |---------|----------|----------|
-| `make up-local` | Docker MySQL (LOCAL_SQL_*) | Development |
-| `make up-remote` | AWS RDS (REMOTE_SQL_*) | Production |
+| `DB_MODE=local docker-compose --profile local up` | Docker MySQL (LOCAL_SQL_*) | Development |
+| `DB_MODE=remote docker-compose up backend frontend` | AWS RDS (REMOTE_SQL_*) | Production |
 
 ## Environment Variables
 
@@ -196,12 +177,12 @@ See [.env.example](.env.example) for the complete template with inline instructi
 
 ### MySQL Database
 
-Use `make up-local` or `make up-remote` to switch databases - `DB_MODE` is set automatically.
+Set `DB_MODE=local` or `DB_MODE=remote` when running docker-compose.
 
 | Variable | Description |
 |----------|-------------|
-| `LOCAL_SQL_*` | Local Docker database credentials (used by `make up-local`) |
-| `REMOTE_SQL_*` | AWS RDS credentials (used by `make up-remote`) |
+| `LOCAL_SQL_*` | Local Docker database credentials (used with `DB_MODE=local`) |
+| `REMOTE_SQL_*` | AWS RDS credentials (used with `DB_MODE=remote`) |
 
 See [.env.example](.env.example) for all database variables.
 

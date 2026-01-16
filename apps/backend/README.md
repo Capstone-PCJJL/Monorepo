@@ -1,258 +1,139 @@
 # Backend
 
-Backend services for the movie recommendation website. Handles data ingestion from TMDB, provides a REST API for the frontend, and manages an approval workflow for new movies.
+Python backend for the movie recommendation site: FastAPI REST API and TMDB data pipeline.
 
-> **Note**: This is part of a monorepo. See the [root README](../../README.md) for full project documentation.
+> **Full Project Setup**: See the [root README](../../README.md) for docker-compose commands and full environment variables.
 
 ## Components
 
-| Component | Description | Documentation |
-|-----------|-------------|---------------|
-| [TMDB Pipeline](tmdb_pipeline/README.md) | CLI for ingesting movie data from TMDB API | Full CLI reference |
-| [REST API](api/README.md) | FastAPI server for frontend integration | Endpoints reference |
-| [Tests](tests/README.md) | Pytest test suite | Coverage & test structure |
-
-## Quick Start
-
-```bash
-# 1. Navigate to backend
-cd apps/backend
-
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. Setup database (reads .env from monorepo root automatically)
-python -m tmdb_pipeline setup
-
-# 5. Test connections
-python -m tmdb_pipeline test
-
-# 6. Run initial data ingestion (test with 5 movies first)
-python -m tmdb_pipeline initial --test-limit 5
-
-# 7. Approve the test movies
-python -m tmdb_pipeline approve
-
-# 8. Start the API server
-uvicorn api.main:app --reload --port 8000
-```
-
-> **Note**: On EC2/Linux, use `python3` instead of `python`.
+| Component | Description |
+|-----------|-------------|
+| [REST API](api/README.md) | FastAPI endpoints for movies, users, watchlist, ratings |
+| [TMDB Pipeline](tmdb_pipeline/README.md) | CLI for ingesting movie data from TMDB |
+| [Tests](tests/README.md) | Pytest test suite |
 
 ## Project Structure
 
 ```
-apps/backend/
-├── api/                    # REST API (FastAPI) - public read-only
-│   ├── main.py             # App entry point
-│   ├── routers/            # Endpoint handlers
-│   └── schemas/            # Pydantic models
-├── tmdb_pipeline/          # Data ingestion CLI
-│   ├── cli.py              # Command-line interface
-│   ├── client.py           # TMDB API client
-│   ├── database.py         # Database operations
-│   ├── pipeline.py         # Ingestion orchestrator
-│   ├── scripts/            # Automation scripts
-│   ├── sql/                # Table schemas
-│   └── docs/               # Pipeline documentation
-├── tests/                  # Test suite
-│   ├── conftest.py         # Fixtures and mocks
-│   ├── test_pipeline_flows.py
-│   └── test_api_public.py
-├── Dockerfile              # Container build
-├── requirements.txt        # Python dependencies
-└── README.md               # This file
+backend/
+├── api/                # REST API (FastAPI)
+│   ├── main.py         # App entry point
+│   ├── routers/        # Endpoint handlers
+│   └── schemas/        # Pydantic models
+├── tmdb_pipeline/      # Data ingestion CLI
+│   ├── cli.py          # Command-line interface
+│   └── docs/           # Deployment guide
+├── tests/              # Test suite
+├── Dockerfile
+└── requirements.txt
 ```
 
-## Environment Variables
+## Running with Python (without Docker)
 
-Create a `.env` file in this directory (`apps/backend/`).
+### 1. Setup
 
-### TMDB API (Required)
-
-| Variable | Description |
-|----------|-------------|
-| `API_KEY` | TMDB API key (v3 auth) |
-| `TMDB_BEARER_TOKEN` | TMDB Bearer token (v4 auth) |
-| `BASE_URL` | TMDB API base URL (default: `https://api.themoviedb.org/3`) |
-
-**How to get TMDB credentials:**
-1. Create an account at [themoviedb.org](https://www.themoviedb.org/)
-2. Go to **Settings > API**
-3. Click **Create** or **Request an API Key**
-4. Select **Developer** and accept the terms
-5. Copy both:
-   - **API Key (v3 auth)** -> `API_KEY`
-   - **API Read Access Token (v4 auth)** -> `TMDB_BEARER_TOKEN`
-
----
-
-### Database (Required)
-
-Use `make up-local` or `make up-remote` - the Makefile sets `DB_MODE` automatically.
-
-#### Local Docker Database (Development)
-
-```env
-LOCAL_SQL_HOST=localhost
-LOCAL_SQL_PORT=3306
-LOCAL_SQL_USER=root
-LOCAL_SQL_PASS=password
-LOCAL_SQL_DB=tmdb
-```
-
-From the monorepo root:
 ```bash
-make up-local   # Auto-seeds ~5k movies on first run, displays URLs
+cd apps/backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-#### AWS RDS (Production/Staging)
+### 2. Configure Environment
+
+Create `.env` in the monorepo root with at minimum:
 
 ```env
-REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
-REMOTE_SQL_PORT=3306
-REMOTE_SQL_USER=your_rds_username
-REMOTE_SQL_PASS=your_rds_password
-REMOTE_SQL_DB=tmdb
-```
+# TMDB API (required for pipeline)
+API_KEY=your_tmdb_api_key
+TMDB_BEARER_TOKEN=your_bearer_token
 
-#### Quick Reference
+# Database (set one pair)
+DB_MODE=local  # or 'remote'
 
-| Command | Database | Profile |
-|---------|----------|---------|
-| `make up-local` | Docker MySQL (LOCAL_SQL_*) | `--profile local` (db + seeder) |
-| `make up-remote` | AWS RDS (REMOTE_SQL_*) | No profile (backend + frontend only) |
-
-> **Note**: The `db` and `seeder` services use Docker Compose profiles. They only start when the `local` profile is activated.
-
-#### Generating Seed Data
-
-To update the local development seed data:
-```bash
-# Export from remote database
-DB_MODE=remote python scripts/export_seed_data.py --limit 10000
-
-# Commit the new seed file
-git add ../../docker/mysql/init/02-seed.sql.gz
-git commit -m "Update local dev seed data"
-```
-
----
-
-### API Server (Optional)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `API_HOST` | `0.0.0.0` | Host to bind |
-| `API_PORT` | `8000` | Server port |
-| `ALLOWED_ORIGINS` | `*` | Comma-separated CORS origins |
-
----
-
-### Example `.env` File
-
-```env
-# TMDB API
-API_KEY=abc123def456
-TMDB_BEARER_TOKEN=eyJhbGciOiJIUzI1NiJ9...
-BASE_URL=https://api.themoviedb.org/3
-
-# Database (DB_MODE is set automatically by Makefile)
 LOCAL_SQL_HOST=localhost
 LOCAL_SQL_PORT=3306
 LOCAL_SQL_USER=root
 LOCAL_SQL_PASS=password
 LOCAL_SQL_DB=tmdb
 
-REMOTE_SQL_HOST=your-rds-endpoint.amazonaws.com
-REMOTE_SQL_PORT=3306
-REMOTE_SQL_USER=admin
-REMOTE_SQL_PASS=your_password
-REMOTE_SQL_DB=tmdb
-
-# API Server (optional)
-API_HOST=0.0.0.0
-API_PORT=8000
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+# Or for remote:
+# REMOTE_SQL_HOST=your-rds-endpoint.amazonaws.com
+# REMOTE_SQL_USER=admin
+# REMOTE_SQL_PASS=your_password
+# REMOTE_SQL_DB=tmdb
 ```
 
-## Running with Docker
+### 3. Run
 
 ```bash
-# Build the image
-docker build -t tmdb-backend .
+# Start API server
+uvicorn api.main:app --reload --port 8000
 
-# Run the pipeline CLI
-docker run --env-file ../../.env tmdb-backend status
-docker run --env-file ../../.env tmdb-backend initial --test-limit 5
-
-# Run the API server
-docker run --env-file ../../.env -p 8000:8000 tmdb-backend api
-
-# Run tests
-docker run tmdb-backend test
-docker run tmdb-backend test -v
+# Run pipeline commands
+python -m tmdb_pipeline status
+python -m tmdb_pipeline approve
 ```
-
-**With docker-compose** (from monorepo root):
-```bash
-docker-compose run --rm backend status
-docker-compose run --rm backend approve
-docker-compose run --rm backend api
-```
-
-See [tmdb_pipeline/README.md](tmdb_pipeline/README.md#docker-command-reference) for the complete Docker command reference.
-
-## API Documentation
-
-Once the API is running, visit:
-- **Swagger UI**: http://localhost:8000/api/docs
-- **ReDoc**: http://localhost:8000/api/redoc
-
-See [api/README.md](api/README.md) for endpoint reference.
 
 ## Pipeline Commands
 
-```bash
-# Setup & status
-python -m tmdb_pipeline setup      # Create database tables
-python -m tmdb_pipeline status     # Check database status
-python -m tmdb_pipeline test       # Test connections
-
-# Data ingestion
-python -m tmdb_pipeline initial --test-limit 5   # Initial import
-python -m tmdb_pipeline add-new                   # Add new releases
-python -m tmdb_pipeline update                    # Update changed movies
-
-# Approval workflow (CLI only)
-python -m tmdb_pipeline approve                   # Interactive review
-python -m tmdb_pipeline list-pending              # List pending movies
-```
-
-See [tmdb_pipeline/README.md](tmdb_pipeline/README.md) for full CLI reference.
-
-## Testing
+### Setup & Status
 
 ```bash
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run with coverage
-pytest --cov=api --cov=tmdb_pipeline --cov-report=term-missing
-
-# Run specific test file
-pytest tests/test_api_public.py
+python -m tmdb_pipeline setup     # Create database tables
+python -m tmdb_pipeline status    # Check database status
+python -m tmdb_pipeline test      # Test API and database connections
 ```
 
-**Test suite:** 47 tests covering pipeline flows and public API.
+### Adding Movies
 
-See [tests/README.md](tests/README.md) for full test documentation.
+```bash
+python -m tmdb_pipeline add-new                   # Fetch new releases → pending
+python -m tmdb_pipeline search "Inception"        # Search TMDB
+python -m tmdb_pipeline search --add 27205        # Add specific movie → pending
+```
 
-## License
+### Approval Workflow
 
-MIT License
+Movies added via `add-new` or `search` go to pending tables. Approve them to make them live:
+
+```bash
+python -m tmdb_pipeline list-pending              # List all pending movies
+
+# Approval modes:
+python -m tmdb_pipeline approve                   # Interactive: review one by one (y/n/q)
+python -m tmdb_pipeline approve --limit 10        # Review first 10 only
+python -m tmdb_pipeline approve --quick           # Approve ALL pending (requires confirmation)
+python -m tmdb_pipeline approve --movie-id 27205  # Approve specific movie by ID
+python -m tmdb_pipeline approve --search "matrix" # Search pending and approve matches
+```
+
+### Running with Docker
+
+```bash
+# In running container
+docker exec -it monorepo-backend python -m tmdb_pipeline status
+docker exec -it monorepo-backend python -m tmdb_pipeline add-new
+docker exec -it monorepo-backend python -m tmdb_pipeline approve
+
+# One-off commands
+docker-compose run --rm backend status
+docker-compose run --rm backend add-new
+docker-compose run --rm backend approve
+docker-compose run --rm backend approve --quick
+```
+
+## Running Tests
+
+```bash
+pytest                                    # Run all tests
+pytest -v                                 # Verbose output
+pytest --cov=api --cov=tmdb_pipeline      # With coverage
+pytest tests/test_api_public.py           # Single test file
+```
+
+## API Documentation
+
+Once running, visit:
+- **Swagger UI**: http://localhost:8000/api/docs
+- **ReDoc**: http://localhost:8000/api/redoc

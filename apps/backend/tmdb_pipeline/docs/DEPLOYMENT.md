@@ -6,14 +6,14 @@ Deploy the TMDB backend for long-running ingestion tasks and hosting the API. Th
 
 ## Database Configuration
 
-The Makefile automatically sets `DB_MODE` based on the command you use:
+Set `DB_MODE` when running docker-compose:
 
 | Command | Database | Profile |
 |---------|----------|---------|
-| `make up-local` | Docker MySQL (LOCAL_SQL_*) | `--profile local` |
-| `make up-remote` | AWS RDS (REMOTE_SQL_*) | No profile |
+| `DB_MODE=local docker-compose --profile local up` | Docker MySQL (LOCAL_SQL_*) | `--profile local` |
+| `DB_MODE=remote docker-compose up backend frontend` | AWS RDS (REMOTE_SQL_*) | No profile |
 
-> **Docker Compose Profiles**: The `db` and `seeder` services have `profiles: [local]`. They only start when the `local` profile is activated via `make up-local` (which runs `docker-compose --profile local up -d`).
+> **Docker Compose Profiles**: The `db` and `seeder` services have `profiles: [local]`. They only start when the `local` profile is activated via `--profile local`.
 
 See the [backend README](../../README.md#database-required) for full configuration details.
 
@@ -147,7 +147,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 **Option C: Docker Compose**
 ```bash
 cd /path/to/Monorepo
-make up-local   # or make up-remote for AWS RDS
+DB_MODE=local docker-compose --profile local up   # or DB_MODE=remote for AWS RDS
 ```
 
 ### 7. Automate Daily Updates
@@ -421,7 +421,7 @@ Add a cron container to `docker-compose.yml`:
       # Same env vars as backend
       - API_KEY=${API_KEY}
       - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN}
-      # DB_MODE is set automatically by Makefile
+      # Set DB_MODE when running
       - LOCAL_SQL_HOST=${LOCAL_SQL_HOST:-localhost}
       - LOCAL_SQL_USER=${LOCAL_SQL_USER:-root}
       - LOCAL_SQL_PASS=${LOCAL_SQL_PASS:-password}
@@ -445,7 +445,7 @@ Best for minimal maintenance - no server to manage.
 
 **Environment Variables** (set in Lambda configuration):
 - `API_KEY`, `TMDB_BEARER_TOKEN`
-- `DB_MODE=remote` (required for Lambda since Makefile isn't used)
+- `DB_MODE=remote` (required for Lambda)
 - `REMOTE_SQL_HOST`, `REMOTE_SQL_USER`, `REMOTE_SQL_PASS`, `REMOTE_SQL_DB`
 
 **EventBridge Schedule:**

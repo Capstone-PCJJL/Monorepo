@@ -718,7 +718,7 @@ def main(args: Optional[list] = None) -> int:
         print("  TMDB_BEARER_TOKEN=<your_bearer_token>")
         print("  LOCAL_SQL_HOST, LOCAL_SQL_USER, LOCAL_SQL_PASS, LOCAL_SQL_DB")
         print("  (or REMOTE_SQL_* for remote database)")
-        print("\nNote: DB_MODE is set automatically by 'make up-local' or 'make up-remote'")
+        print("\nNote: Set DB_MODE=local or DB_MODE=remote when running docker-compose")
         return 1
 
     # Create components
