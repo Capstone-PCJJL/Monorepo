@@ -11,8 +11,8 @@ Data persistence strategy:
 - Use --force to re-fetch from remote and update the local dump
 
 Usage:
-    python scripts/seed_from_remote.py              # Default 10,000 movies
-    python scripts/seed_from_remote.py --limit 5000 # Custom limit
+    python scripts/seed_from_remote.py              # Default 5,000 movies
+    python scripts/seed_from_remote.py --limit 1000 # Custom limit
     python scripts/seed_from_remote.py --force      # Force re-fetch from AWS
 """
 
@@ -84,24 +84,23 @@ def get_movie_count(config: dict) -> int:
 
 def dump_database(config: dict) -> bool:
     """Dump local database to compressed SQL file."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-    print(f"\nBacking up database to {DUMP_FILE}...")
-
-    cmd = [
-        "mysqldump",
-        f"--host={config['host']}",
-        f"--port={config['port']}",
-        f"--user={config['user']}",
-        f"--password={config['password']}",
-        "--ssl-mode=DISABLED",
-        "--single-transaction",
-        "--routines",
-        "--triggers",
-        config["database"],
-    ]
-
     try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"\nBacking up database to {DUMP_FILE}...")
+        print(f"DATA_DIR: {DATA_DIR}")
+
+        cmd = [
+            "mysqldump",
+            f"--host={config['host']}",
+            f"--port={config['port']}",
+            f"--user={config['user']}",
+            f"--password={config['password']}",
+            "--single-transaction",
+            "--routines",
+            "--triggers",
+            config["database"],
+        ]
+
         # Run mysqldump and compress output
         result = subprocess.run(cmd, capture_output=True, check=True)
         with gzip.open(DUMP_FILE, "wb") as f:
@@ -115,6 +114,9 @@ def dump_database(config: dict) -> bool:
         return False
     except FileNotFoundError:
         print("WARNING: mysqldump not available, skipping backup")
+        return False
+    except Exception as e:
+        print(f"ERROR: Backup failed with unexpected error: {e}")
         return False
 
 
@@ -230,8 +232,8 @@ def main():
     parser.add_argument(
         "--limit",
         type=int,
-        default=10000,
-        help="Maximum number of movies to seed (default: 10000)"
+        default=5000,
+        help="Maximum number of movies to seed (default: 5000)"
     )
     parser.add_argument(
         "--force",

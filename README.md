@@ -76,6 +76,24 @@ docker-compose down                   # remote
 docker-compose --profile local down -v
 ```
 
+**View logs:**
+```bash
+docker-compose logs -f backend    # Follow backend logs
+docker-compose logs -f            # Follow all service logs
+docker-compose logs seeder        # Check seeder output (local profile only)
+```
+
+**Re-seed database** (if backup is missing or you need fresh data):
+```bash
+# Force re-download from AWS RDS
+docker-compose --profile local run --rm seeder seed --force
+
+# Check if backup exists
+ls -la apps/backend/data/
+```
+
+> **Note**: The seeder downloads ~5k movies from AWS RDS and saves to `apps/backend/data/seed_backup.sql.gz`. If this file is missing, run the force command above.
+
 **Clear Docker cache:**
 ```bash
 docker system prune -a    # Remove ALL unused images, containers, networks (frees disk space)
