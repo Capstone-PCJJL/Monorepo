@@ -21,8 +21,9 @@ Command-line interface for ingesting and managing movie data from The Movie Data
 
 See the [backend README](../../README.md#environment-variables) for all environment variables. The pipeline requires:
 - TMDB credentials (`API_KEY`, `TMDB_BEARER_TOKEN`)
-- Database mode (`DB_MODE=local` or `DB_MODE=remote`)
-- Database credentials (`LOCAL_SQL_*` or `REMOTE_SQL_*` depending on mode)
+- Database credentials (`LOCAL_SQL_*` or `REMOTE_SQL_*`)
+
+Note: `DB_MODE` is set automatically by `make up-local` or `make up-remote`.
 
 ## Quick Start
 

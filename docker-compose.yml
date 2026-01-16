@@ -9,10 +9,10 @@
 #   API Docs:   http://localhost:8000/api/docs
 #   MySQL:      localhost:3306
 #
-# SWITCHING DATABASES - Just change DB_MODE in .env:
+# SWITCHING DATABASES - Use the Makefile commands:
 #
-#   DB_MODE=local   -> Uses LOCAL_SQL_* variables (Docker MySQL)
-#   DB_MODE=remote  -> Uses REMOTE_SQL_* variables (AWS RDS)
+#   make up-local   -> Starts Docker MySQL + sets DB_MODE=local
+#   make up-remote  -> Uses AWS RDS + sets DB_MODE=remote
 #
 # COMMANDS:
 #

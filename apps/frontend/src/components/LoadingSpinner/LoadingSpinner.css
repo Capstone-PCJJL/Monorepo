@@ -1,4 +1,4 @@
-/* Film Reel Loading Spinner */
+/* Film Clapperboard Loading Spinner */
 
 .spinner-fullscreen {
   position: fixed;
@@ -13,105 +13,180 @@
   z-index: 9999;
 }
 
-.film-spinner {
+.clapperboard-spinner {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  padding: 20px;
 }
 
 /* Size variants */
-.film-spinner--small .film-reel {
-  width: 32px;
-  height: 32px;
+.clapperboard-spinner--small .clapperboard-container {
+  width: 50px;
+  height: 45px;
 }
 
-.film-spinner--medium .film-reel {
-  width: 80px;
-  height: 80px;
+.clapperboard-spinner--medium .clapperboard-container {
+  width: 100px;
+  height: 90px;
 }
 
-.film-spinner--large .film-reel {
-  width: 120px;
-  height: 120px;
+.clapperboard-spinner--large .clapperboard-container {
+  width: 150px;
+  height: 135px;
 }
 
-/* Film reel container */
-.film-reel {
+/* Container for the whole clapperboard - handles the spin */
+.clapperboard-container {
+  perspective: 500px;
+  animation: boardSpin 2.5s ease-in-out infinite;
+}
+
+/* The clapperboard itself */
+.clapperboard {
   position: relative;
-  border-radius: 50%;
-  background: #1a1a1a;
-  border: 4px solid #e50914;
-  animation: spin 1.2s linear infinite;
-  box-shadow:
-    0 0 30px rgba(229, 9, 20, 0.3),
-    inset 0 0 20px rgba(0, 0, 0, 0.8);
+  width: 100%;
+  height: 100%;
 }
 
-/* Center hole */
-.reel-center {
+/* Top clapper part - the striped piece that snaps down */
+.clapper-top {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 25%;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 25%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #0f0f0f;
-  border: 3px solid #e50914;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%, #1a1a1a 10%,
+    #f5f5f5 10%, #f5f5f5 20%,
+    #1a1a1a 20%, #1a1a1a 30%,
+    #f5f5f5 30%, #f5f5f5 40%,
+    #1a1a1a 40%, #1a1a1a 50%,
+    #f5f5f5 50%, #f5f5f5 60%,
+    #1a1a1a 60%, #1a1a1a 70%,
+    #f5f5f5 70%, #f5f5f5 80%,
+    #1a1a1a 80%, #1a1a1a 90%,
+    #f5f5f5 90%, #f5f5f5 100%
+  );
+  border-radius: 3px 3px 0 0;
+  transform-origin: bottom center;
+  animation: clapperSnap 2.5s ease-in-out infinite;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 
-/* Sprocket holes - positioned around the reel */
-.sprocket {
+/* Hide the individual stripes since we're using gradient */
+.clapper-top .stripe,
+.clapper-bottom .stripe {
+  display: none;
+}
+
+/* Bottom board - the slate part */
+.clapper-bottom {
   position: absolute;
-  width: 12%;
-  height: 12%;
-  border-radius: 50%;
-  background: #0f0f0f;
-  border: 2px solid #333;
+  top: 20%;
+  left: 0;
+  width: 100%;
+  height: 80%;
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%, #1a1a1a 10%,
+    #f5f5f5 10%, #f5f5f5 20%,
+    #1a1a1a 20%, #1a1a1a 30%,
+    #f5f5f5 30%, #f5f5f5 40%,
+    #1a1a1a 40%, #1a1a1a 50%,
+    #f5f5f5 50%, #f5f5f5 60%,
+    #1a1a1a 60%, #1a1a1a 70%,
+    #f5f5f5 70%, #f5f5f5 80%,
+    #1a1a1a 80%, #1a1a1a 90%,
+    #f5f5f5 90%, #f5f5f5 100%
+  );
+  background-size: 100% 30%;
+  background-repeat: no-repeat;
+  background-position: top;
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* Position 6 sprockets evenly around the circle */
-.sprocket-1 {
-  top: 5%;
-  left: 50%;
-  transform: translateX(-50%);
+/* Black slate body area */
+.slate-body {
+  position: absolute;
+  top: 30%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #1a1a1a;
+  border-radius: 0 0 3px 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8%;
+  gap: 12%;
 }
 
-.sprocket-2 {
-  top: 22%;
-  right: 8%;
+/* White lines on the slate (like writing lines) */
+.slate-line {
+  height: 8%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }
 
-.sprocket-3 {
-  bottom: 22%;
-  right: 8%;
+.slate-line:nth-child(1) {
+  width: 80%;
 }
 
-.sprocket-4 {
-  bottom: 5%;
-  left: 50%;
-  transform: translateX(-50%);
+.slate-line:nth-child(2) {
+  width: 60%;
 }
 
-.sprocket-5 {
-  bottom: 22%;
-  left: 8%;
+.slate-line:nth-child(3) {
+  width: 70%;
 }
 
-.sprocket-6 {
-  top: 22%;
-  left: 8%;
-}
-
-/* Spin animation */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
+/* Clapper snap animation - opens, snaps closed, holds, opens */
+@keyframes clapperSnap {
+  0% {
+    transform: rotateX(-45deg);
   }
-  to {
-    transform: rotate(360deg);
+  /* Hold open */
+  15% {
+    transform: rotateX(-45deg);
+  }
+  /* Snap down quickly */
+  20% {
+    transform: rotateX(0deg);
+  }
+  /* Stay closed during spin */
+  75% {
+    transform: rotateX(0deg);
+  }
+  /* Open back up */
+  85% {
+    transform: rotateX(-45deg);
+  }
+  100% {
+    transform: rotateX(-45deg);
+  }
+}
+
+/* Board spin animation - spins while clapper is closed */
+@keyframes boardSpin {
+  0% {
+    transform: rotateY(0deg);
+  }
+  /* Wait for clapper to close */
+  20% {
+    transform: rotateY(0deg);
+  }
+  /* Spin 360 degrees */
+  75% {
+    transform: rotateY(360deg);
+  }
+  /* Hold still while clapper opens */
+  100% {
+    transform: rotateY(360deg);
   }
 }
 
@@ -126,11 +201,11 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-.film-spinner--small .spinner-message {
+.clapperboard-spinner--small .spinner-message {
   font-size: 12px;
 }
 
-.film-spinner--large .spinner-message {
+.clapperboard-spinner--large .spinner-message {
   font-size: 20px;
 }
 
@@ -141,9 +216,4 @@
   50% {
     opacity: 1;
   }
-}
-
-/* Inline spinner styling */
-.film-spinner {
-  padding: 20px;
 }

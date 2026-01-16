@@ -1,7 +1,7 @@
 .PHONY: up-local up-remote down-local down-remote restart-local restart-remote clean-local clean-remote logs seed-force seed-status
 
 up-local:
-	@docker-compose --profile local up -d
+	@DB_MODE=local docker-compose --profile local up -d
 	@echo ""
 	@echo "========================================="
 	@echo "  Services are starting (Local DB)..."
@@ -15,7 +15,7 @@ up-local:
 	@echo "========================================="
 
 up-remote:
-	@docker-compose up backend frontend -d
+	@DB_MODE=remote docker-compose up backend frontend -d
 	@echo ""
 	@echo "========================================="
 	@echo "  Services are starting (Remote DB)..."
@@ -36,11 +36,11 @@ down-remote:
 
 restart-local:
 	@docker-compose --profile local down
-	@docker-compose --profile local up -d
+	@DB_MODE=local docker-compose --profile local up -d
 
 restart-remote:
 	@docker-compose stop backend frontend
-	@docker-compose up backend frontend -d
+	@DB_MODE=remote docker-compose up backend frontend -d
 
 clean-local:
 	@docker-compose --profile local down -v

@@ -91,17 +91,11 @@ Create a `.env` file in this directory (`apps/backend/`).
 
 ### Database (Required)
 
-Switch between local and remote databases by changing `DB_MODE`:
-
-```env
-DB_MODE=local   # Uses LOCAL_SQL_* variables
-DB_MODE=remote  # Uses REMOTE_SQL_* variables
-```
+Use `make up-local` or `make up-remote` - the Makefile sets `DB_MODE` automatically.
 
 #### Local Docker Database (Development)
 
 ```env
-DB_MODE=local
 LOCAL_SQL_HOST=localhost
 LOCAL_SQL_PORT=3306
 LOCAL_SQL_USER=root
@@ -117,7 +111,6 @@ make up-local   # Auto-seeds ~5k movies on first run, displays URLs
 #### AWS RDS (Production/Staging)
 
 ```env
-DB_MODE=remote
 REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
 REMOTE_SQL_PORT=3306
 REMOTE_SQL_USER=your_rds_username
@@ -127,10 +120,10 @@ REMOTE_SQL_DB=tmdb
 
 #### Quick Reference
 
-| Mode | Command | Profile |
-|------|---------|---------|
-| `DB_MODE=local` | `make up-local` | `--profile local` (db + seeder) |
-| `DB_MODE=remote` | `make up-remote` | No profile (backend + frontend only) |
+| Command | Database | Profile |
+|---------|----------|---------|
+| `make up-local` | Docker MySQL (LOCAL_SQL_*) | `--profile local` (db + seeder) |
+| `make up-remote` | AWS RDS (REMOTE_SQL_*) | No profile (backend + frontend only) |
 
 > **Note**: The `db` and `seeder` services use Docker Compose profiles. They only start when the `local` profile is activated.
 
@@ -138,14 +131,8 @@ REMOTE_SQL_DB=tmdb
 
 To update the local development seed data:
 ```bash
-# Temporarily switch to remote to export from production
-# Edit .env: DB_MODE=remote
-
-# Export top 10,000 movies
-python scripts/export_seed_data.py --limit 10000
-
-# Switch back to local
-# Edit .env: DB_MODE=local
+# Export from remote database
+DB_MODE=remote python scripts/export_seed_data.py --limit 10000
 
 # Commit the new seed file
 git add ../../docker/mysql/init/02-seed.sql.gz
@@ -172,9 +159,7 @@ API_KEY=abc123def456
 TMDB_BEARER_TOKEN=eyJhbGciOiJIUzI1NiJ9...
 BASE_URL=https://api.themoviedb.org/3
 
-# Database - switch mode: local or remote
-DB_MODE=local
-
+# Database (DB_MODE is set automatically by Makefile)
 LOCAL_SQL_HOST=localhost
 LOCAL_SQL_PORT=3306
 LOCAL_SQL_USER=root

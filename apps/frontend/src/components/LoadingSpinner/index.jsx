@@ -2,22 +2,39 @@ import React from 'react';
 import './LoadingSpinner.css';
 
 /**
- * Film reel themed loading spinner
+ * Film clapperboard themed loading spinner
+ * Animation: opens → snaps closed → spins → opens again
  * @param {string} message - Optional loading message
  * @param {boolean} fullscreen - Whether to display fullscreen overlay
  * @param {string} size - Size variant: 'small', 'medium', 'large'
  */
 const LoadingSpinner = ({ message = 'Loading...', fullscreen = false, size = 'medium' }) => {
   const spinner = (
-    <div className={`film-spinner film-spinner--${size}`}>
-      <div className="film-reel">
-        <div className="reel-center"></div>
-        <div className="sprocket sprocket-1"></div>
-        <div className="sprocket sprocket-2"></div>
-        <div className="sprocket sprocket-3"></div>
-        <div className="sprocket sprocket-4"></div>
-        <div className="sprocket sprocket-5"></div>
-        <div className="sprocket sprocket-6"></div>
+    <div className={`clapperboard-spinner clapperboard-spinner--${size}`}>
+      <div className="clapperboard-container">
+        <div className="clapperboard">
+          {/* Top clapper (the part that snaps down) */}
+          <div className="clapper-top">
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+          </div>
+          {/* Bottom board (the slate) */}
+          <div className="clapper-bottom">
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="stripe"></div>
+            <div className="slate-body">
+              <div className="slate-line"></div>
+              <div className="slate-line"></div>
+              <div className="slate-line"></div>
+            </div>
+          </div>
+        </div>
       </div>
       {message && <p className="spinner-message">{message}</p>}
     </div>

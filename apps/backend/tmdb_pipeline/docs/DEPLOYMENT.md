@@ -6,17 +6,12 @@ Deploy the TMDB backend for long-running ingestion tasks and hosting the API. Th
 
 ## Database Configuration
 
-The application supports two database modes, controlled by `DB_MODE` in `.env`:
+The Makefile automatically sets `DB_MODE` based on the command you use:
 
-```env
-DB_MODE=local   # Uses LOCAL_SQL_* variables (Docker MySQL)
-DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
-```
-
-| Mode | Use Case | Command | Profile |
-|------|----------|---------|---------|
-| `local` | Development with Docker MySQL | `make up-local` | `--profile local` |
-| `remote` | Production with AWS RDS | `make up-remote` | No profile |
+| Command | Database | Profile |
+|---------|----------|---------|
+| `make up-local` | Docker MySQL (LOCAL_SQL_*) | `--profile local` |
+| `make up-remote` | AWS RDS (REMOTE_SQL_*) | No profile |
 
 > **Docker Compose Profiles**: The `db` and `seeder` services have `profiles: [local]`. They only start when the `local` profile is activated via `make up-local` (which runs `docker-compose --profile local up -d`).
 
@@ -95,8 +90,6 @@ FLUSH PRIVILEGES;
 
 **Update `.env`:**
 ```env
-DB_MODE=local
-
 LOCAL_SQL_HOST=localhost
 LOCAL_SQL_PORT=3306
 LOCAL_SQL_USER=tmdb_user
@@ -330,8 +323,6 @@ Add inbound rule: MySQL (3306) from EC2 security group
 ### Update `.env`
 
 ```env
-DB_MODE=remote
-
 REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
 REMOTE_SQL_PORT=3306
 REMOTE_SQL_USER=admin
@@ -430,7 +421,7 @@ Add a cron container to `docker-compose.yml`:
       # Same env vars as backend
       - API_KEY=${API_KEY}
       - TMDB_BEARER_TOKEN=${TMDB_BEARER_TOKEN}
-      - DB_MODE=${DB_MODE:-local}
+      # DB_MODE is set automatically by Makefile
       - LOCAL_SQL_HOST=${LOCAL_SQL_HOST:-localhost}
       - LOCAL_SQL_USER=${LOCAL_SQL_USER:-root}
       - LOCAL_SQL_PASS=${LOCAL_SQL_PASS:-password}
@@ -454,7 +445,7 @@ Best for minimal maintenance - no server to manage.
 
 **Environment Variables** (set in Lambda configuration):
 - `API_KEY`, `TMDB_BEARER_TOKEN`
-- `DB_MODE=remote`
+- `DB_MODE=remote` (required for Lambda since Makefile isn't used)
 - `REMOTE_SQL_HOST`, `REMOTE_SQL_USER`, `REMOTE_SQL_PASS`, `REMOTE_SQL_DB`
 
 **EventBridge Schedule:**

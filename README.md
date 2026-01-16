@@ -112,13 +112,12 @@ git clone <repository-url>
 cd Monorepo
 cp .env.example .env
 
-# Edit .env:
-#   DB_MODE=remote
+# Edit .env with your AWS RDS credentials:
 #   REMOTE_SQL_HOST=your-rds-endpoint.region.rds.amazonaws.com
 #   REMOTE_SQL_USER=your_rds_username
 #   REMOTE_SQL_PASS=your_rds_password
 
-# Start without local database
+# Start without local database (automatically uses remote DB)
 make up-remote
 ```
 
@@ -144,7 +143,7 @@ docker run -d --name mysql \
   -v $(pwd)/docker/mysql/init:/docker-entrypoint-initdb.d:ro \
   mysql:8
 
-# Or use AWS RDS (set DB_MODE=remote in .env)
+# Or use AWS RDS (use make up-remote)
 ```
 
 #### Backend
@@ -177,17 +176,12 @@ npm run dev
 
 ### Switching Databases
 
-Just change `DB_MODE` in `.env`:
+Just use the appropriate make command - `DB_MODE` is set automatically:
 
-```env
-DB_MODE=local   # Uses LOCAL_SQL_* variables (Docker MySQL)
-DB_MODE=remote  # Uses REMOTE_SQL_* variables (AWS RDS)
-```
-
-| Mode | Command | Best For |
-|------|---------|----------|
-| `DB_MODE=local` | `make up-local` | Development |
-| `DB_MODE=remote` | `make up-remote` | Production |
+| Command | Database | Best For |
+|---------|----------|----------|
+| `make up-local` | Docker MySQL (LOCAL_SQL_*) | Development |
+| `make up-remote` | AWS RDS (REMOTE_SQL_*) | Production |
 
 ## Environment Variables
 
@@ -202,13 +196,12 @@ See [.env.example](.env.example) for the complete template with inline instructi
 
 ### MySQL Database
 
-Use `DB_MODE` to switch between local Docker and AWS RDS:
+Use `make up-local` or `make up-remote` to switch databases - `DB_MODE` is set automatically.
 
 | Variable | Description |
 |----------|-------------|
-| `DB_MODE` | `local` (Docker MySQL) or `remote` (AWS RDS) |
-| `LOCAL_SQL_*` | Local Docker database credentials (used when `DB_MODE=local`) |
-| `REMOTE_SQL_*` | AWS RDS credentials (used when `DB_MODE=remote`) |
+| `LOCAL_SQL_*` | Local Docker database credentials (used by `make up-local`) |
+| `REMOTE_SQL_*` | AWS RDS credentials (used by `make up-remote`) |
 
 See [.env.example](.env.example) for all database variables.
 
