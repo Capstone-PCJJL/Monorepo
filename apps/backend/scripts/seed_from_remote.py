@@ -95,6 +95,7 @@ def dump_database(config: dict) -> bool:
             f"--port={config['port']}",
             f"--user={config['user']}",
             f"--password={config['password']}",
+            "--skip-ssl",
             "--single-transaction",
             "--routines",
             "--triggers",
